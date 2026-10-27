@@ -1,5 +1,7 @@
 # Orion
 
+[![tests](https://github.com/noushiFlex/orion/actions/workflows/tests.yml/badge.svg)](https://github.com/noushiFlex/orion/actions/workflows/tests.yml)
+
 Football match prediction (home / draw / away probabilities and score distributions), built to be measured
 honestly against the betting market. Point-in-time features, walk-forward backtests, leakage tests, and a
 version history where every change is scored against the same 6,228 matches.
