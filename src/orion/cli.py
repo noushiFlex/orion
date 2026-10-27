@@ -68,11 +68,12 @@ def cmd_backtest(cfg, args):
     start = time.perf_counter()
     with ui.live():
         ds = _dataset(cfg, args.rebuild)
-        predictions, scores = backtest.run(cfg, ds)
+        predictions, scores, weights = backtest.run(cfg, ds)
     run = tracking.new_run(cfg, "backtest", ds.fingerprint())
     predictions.to_parquet(run / "predictions.parquet", index=False)
     scores.to_csv(run / "scores.csv", index=False)
-    ui.backtest_dashboard(predictions, scores, len(ds.feature_cols), time.perf_counter() - start, run)
+    (run / "ensemble_weights.json").write_text(json.dumps(weights, indent=2))
+    ui.backtest_dashboard(predictions, scores, weights, len(ds.feature_cols), time.perf_counter() - start, run)
 
 
 def cmd_train(cfg, args):

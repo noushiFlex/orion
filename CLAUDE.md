@@ -81,8 +81,20 @@ Backtest, test seasons 2022/23 to 2025/26, `with_odds` subset:
 
 v1 does not beat the market. Do not use it for betting.
 
-Ideas for v2 (new config file, keep v1 unchanged): opening odds as a feature, probability calibration, per-match
-absences (injuries, suspensions), shot-level xG, Champions League data.
+Versions (each one a config in `configs/`, same test seasons and `with_odds` subset, best model's log-loss):
+
+| Version | Change | Log-loss | vs closing |
+|---|---|---|---|
+| v1 | form, Elo, ClubElo, rest; poisson + gbm | 0.9801 | +0.0171 |
+| v1.1 | + goalrate (online attack/defence from goals and xG) | 0.9780 | +0.0150 |
+| v1.2 | + logit, regularised gbm, ensemble poisson/logit/gbm | 0.9769 | +0.0138 |
+| v1.3 | + pre-closing market-average odds as a feature | 0.9687 | +0.0057 |
+| v1.4 | stacking with `market_pre` as a member, learned weights | 0.9653 | +0.0023 |
+
+Reference points: pre-closing market average alone 0.9655, Pinnacle closing 0.9630. v1.4 only matches the
+pre-closing market (stacking gives it 60-80% of the weight): no real edge yet. A real gain needs information the
+market prices late or poorly (lineups, absences). Pinnacle columns are absent from 2026/27 files, so the closing
+baseline only exists for past seasons; `AvgH/BbAvH` (pre-closing average) exists everywhere, fixtures included.
 
 ## Rules
 

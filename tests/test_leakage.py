@@ -10,6 +10,7 @@ FEATURE_SETS = [
     {"form": {"windows": [3], "min_periods": 1}},
     {"elo": {}},
     {"rest": {}},
+    {"goalrate": {}},
 ]
 
 

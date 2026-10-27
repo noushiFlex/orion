@@ -9,35 +9,30 @@ import logging
 import numpy as np
 import pandas as pd
 
-from orion import progress, seasons
+from orion import progress, seasons, training
 from orion.config import Config
 from orion.dataset import Dataset
 from orion.evaluation.metrics import evaluate
-from orion.models import MODELS, combine
 from orion.models.market import ODDS
 
 log = logging.getLogger(__name__)
 
 
-def run(cfg: Config, ds: Dataset) -> tuple[pd.DataFrame, pd.DataFrame]:
+def run(cfg: Config, ds: Dataset) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, dict[str, float]]]:
+    """Returns predictions, scores, and the ensemble weights used for each test season."""
     df = ds.played
     year = df["season"].map(seasons.start_year)
     first = seasons.start_year(cfg.train_from)
-    preds = []
-    with progress.task("Backtest", total=len(cfg.test_seasons) * len(cfg.models)) as bar:
+    preds, weights_by_season = [], {}
+    with progress.task("Backtest", total=len(cfg.test_seasons) * training.steps(cfg)) as bar:
         for season in cfg.test_seasons:
             test_year = seasons.start_year(season)
             train, test = df[(year >= first) & (year < test_year)], df[year == test_year]
-            probs = {}
-            for name, params in cfg.models.items():
-                bar.advance(0, label=f"{season} · {name} · {len(train):,} train / {len(test):,} test")
-                probs[name] = MODELS.get(name)(ds.feature_cols, seed=cfg.seed, **params).fit(train).predict_proba(test)
-                bar.advance()
-            if cfg.ensemble:
-                probs["ensemble"] = combine(probs, cfg.ensemble)
-            preds += [_frame(season, test, name, p) for name, p in probs.items()]
+            models, weights = training.fit(cfg, ds.feature_cols, train, bar, label=f"{season} · ")
+            weights_by_season[season] = weights
+            preds += [_frame(season, test, name, p) for name, p in training.predict(models, weights, test).items()]
     predictions = pd.concat(preds, ignore_index=True)
-    return predictions, score(predictions)
+    return predictions, score(predictions), weights_by_season
 
 
 def _frame(season: str, test: pd.DataFrame, model: str, p: np.ndarray) -> pd.DataFrame:

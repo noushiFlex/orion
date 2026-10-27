@@ -21,7 +21,10 @@ RENAME = {
     "HF": "home_fouls", "AF": "away_fouls", "HY": "home_yellow", "AY": "away_yellow",
     "HR": "home_red", "AR": "away_red",
     "PSCH": "odds_close_home", "PSCD": "odds_close_draw", "PSCA": "odds_close_away",  # Pinnacle closing
+    "AvgH": "odds_pre_home", "AvgD": "odds_pre_draw", "AvgA": "odds_pre_away",  # market average, pre-closing
 }
+# Before 2019/20 the pre-closing market average was published as BbAv*; used when Avg* is absent.
+LEGACY = {"BbAvH": "odds_pre_home", "BbAvD": "odds_pre_draw", "BbAvA": "odds_pre_away"}
 
 
 @SOURCES.register
@@ -76,5 +79,7 @@ class FootballData(Source):
 
 def _read(path: Path) -> pd.DataFrame:
     df = pd.read_csv(path, encoding="utf-8-sig", encoding_errors="replace", on_bad_lines="skip",
-                     usecols=lambda c: c in RENAME, low_memory=False)
-    return df.rename(columns=RENAME)
+                     usecols=lambda c: c in RENAME or c in LEGACY, low_memory=False)
+    legacy = {old: new for old, new in LEGACY.items() if old in df.columns and new not in df.columns.map(RENAME.get)}
+    df = df.drop(columns=[c for c in LEGACY if c in df.columns and c not in legacy])
+    return df.rename(columns={**RENAME, **legacy})

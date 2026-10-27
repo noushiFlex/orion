@@ -78,7 +78,8 @@ def _panel_stats(rows: dict[str, str], title: str) -> Panel:
     return Panel(t, title=title, border_style="cyan", expand=False)
 
 
-def backtest_dashboard(predictions: pd.DataFrame, scores: pd.DataFrame, n_features: int, elapsed: float, run: Path) -> None:
+def backtest_dashboard(predictions: pd.DataFrame, scores: pd.DataFrame, weights: dict[str, dict[str, float]],
+                       n_features: int, elapsed: float, run: Path) -> None:
     odds = scores[(scores["subset"] == "with_odds") & (scores["season"] == "all")].set_index("model")
     allm = scores[(scores["subset"] == "all") & (scores["season"] == "all")].set_index("model")
     market = odds.loc["market", "log_loss"] if "market" in odds.index else np.nan
@@ -117,8 +118,20 @@ def backtest_dashboard(predictions: pd.DataFrame, scores: pd.DataFrame, n_featur
             "accuracy (all matches)": f"{allm.loc[best, 'accuracy']:.1%}",
             "verdict": verdict,
         }, "Verdict"),
+        *([_weights_table(weights)] if any(weights.values()) else []),
     ]))
     console.print(f"[dim]saved to {run}[/]\n")
+
+
+def _weights_table(weights: dict[str, dict[str, float]]) -> Table:
+    members = sorted({m for w in weights.values() for m in w})
+    table = Table(title="Ensemble weights per test season", title_justify="left", border_style="cyan", header_style="bold")
+    table.add_column("season")
+    for m in members:
+        table.add_column(m, justify="right")
+    for season, w in weights.items():
+        table.add_row(season, *[f"{w.get(m, 0):.0%}" for m in members])
+    return table
 
 
 def _curve(scores: pd.DataFrame) -> Text:

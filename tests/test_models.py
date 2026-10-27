@@ -8,7 +8,7 @@ from orion.models import MODELS
 from conftest import make_matches
 
 
-@pytest.mark.parametrize("name", ["poisson", "gbm"])
+@pytest.mark.parametrize("name", ["poisson", "gbm", "logit"])
 def test_models_return_valid_probabilities(name):
     ds = build_features(Context(None, make_matches(rounds=60)), {"form": {"windows": [5]}, "elo": {}})
     played = ds.played
