@@ -23,6 +23,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
+docs = ["matplotlib>=3.8"]
 
 [project.scripts]
 orion = "orion.cli:main"

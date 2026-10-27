@@ -54,7 +54,11 @@ plotext): backtest prints scores vs market, a log-loss curve per season, a per-l
 and predict print summary panels. Core modules report progress through `orion.progress` and never import the UI.
 plotext is pinned below 6 (6.x rewrote its API).
 
-Tests: `./.venv/bin/pytest -q` (20 tests: leakage, point-in-time, mapping, schema, metrics, models).
+Tests: `./.venv/bin/pytest -q` (31 tests: leakage, point-in-time, mapping, schema, metrics, models, Transfermarkt
+SQL on a synthetic DuckDB). CI: `.github/workflows/tests.yml` runs them on Python 3.12 and 3.13.
+
+`README.md` is the public face of the repo; its figures come from `docs/make_figures.py` (`pip install -e ".[docs]"`),
+which reads the latest backtest runs. Regenerate them and update the README tables after a new version.
 Dependencies: `pyproject.toml`, exact versions in `requirements.lock`. Install: `./.venv/bin/pip install -e ".[dev]"`.
 
 ## Metrics
