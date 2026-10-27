@@ -78,6 +78,11 @@ def _panel_stats(rows: dict[str, str], title: str) -> Panel:
     return Panel(t, title=title, border_style="cyan", expand=False)
 
 
+def skill(log_loss: float, market: float) -> float:
+    """Share of the closing market's improvement over random guessing that a model achieves."""
+    return (np.log(3) - log_loss) / (np.log(3) - market)
+
+
 def backtest_dashboard(predictions: pd.DataFrame, scores: pd.DataFrame, weights: dict[str, dict[str, float]],
                        n_features: int, elapsed: float, run: Path) -> None:
     odds = scores[(scores["subset"] == "with_odds") & (scores["season"] == "all")].set_index("model")
@@ -87,14 +92,15 @@ def backtest_dashboard(predictions: pd.DataFrame, scores: pd.DataFrame, weights:
 
     table = Table(title="Scores on matches with closing odds (lower is better)", title_justify="left",
                   border_style="cyan", header_style="bold")
-    for col in ("model", "log-loss", "RPS", "Brier", "accuracy", "vs market", "matches"):
+    for col in ("model", "log-loss", "skill", "RPS", "Brier", "accuracy", "vs market", "matches"):
         table.add_column(col, justify="left" if col == "model" else "right")
     for model, r in odds.sort_values("log_loss").iterrows():
         gap = r["log_loss"] - market
         gap_txt = "[dim]baseline[/]" if model == "market" else f"[{'green' if gap < 0 else 'red'}]{gap:+.4f}[/]"
         name = f"[{COLORS.get(model, 'white')}]{model}[/]" + (" [yellow]★[/]" if model == best else "")
-        table.add_row(name, f"{r['log_loss']:.4f}", f"{r['rps']:.4f}", f"{r['brier']:.4f}",
-                      f"{r['accuracy']:.1%}", gap_txt, f"{int(r['n']):,}")
+        table.add_row(name, f"{r['log_loss']:.4f}", f"{skill(r['log_loss'], market):.1%}", f"{r['rps']:.4f}",
+                      f"{r['brier']:.4f}", f"{r['accuracy']:.1%}", gap_txt, f"{int(r['n']):,}")
+    table.caption = "skill: 0% = random guessing (log-loss ln 3), 100% = closing market, above 100% beats it"
 
     console.print()
     console.print(table)
@@ -113,6 +119,7 @@ def backtest_dashboard(predictions: pd.DataFrame, scores: pd.DataFrame, weights:
         }, "Run"),
         _panel_stats({
             "best model": f"{best}  ({odds.loc[best, 'log_loss']:.4f})",
+            "skill": f"{skill(odds.loc[best, 'log_loss'], market):.1%} of the market",
             "market": f"{market:.4f}",
             "gap": f"{odds.loc[best, 'log_loss'] - market:+.4f}",
             "accuracy (all matches)": f"{allm.loc[best, 'accuracy']:.1%}",
