@@ -14,7 +14,8 @@ def make_matches(rounds: int = 30, teams=("A", "B", "C", "D", "E", "F"), seed: i
         for h, a in zip(order[::2], order[1::2]):
             row = {"div": "E0", "season": "2021", "date": day, "home": h, "away": a,
                    "home_goals": rng.poisson(1.5), "away_goals": rng.poisson(1.1)}
-            for stat, lam in (("shots", 12), ("sot", 4), ("corners", 5)):
+            row["referee"] = rng.choice(["R1", "R2", "R3"])
+            for stat, lam in (("shots", 12), ("sot", 4), ("corners", 5), ("fouls", 11), ("yellow", 2), ("red", 0.1)):
                 row[f"home_{stat}"], row[f"away_{stat}"] = rng.poisson(lam), rng.poisson(lam)
             row["home_xg"], row["away_xg"] = rng.gamma(2, 0.7), rng.gamma(2, 0.6)
             for o, base in (("home", 2.2), ("draw", 3.4), ("away", 3.3)):

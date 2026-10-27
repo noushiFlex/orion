@@ -1,4 +1,8 @@
-"""Rolling form: mean goals, shots, shots on target, corners, xG (for and against) and points over the last N matches."""
+"""Rolling form: mean of each stat (for and against) and points over the last N matches.
+
+`stats` picks from goals, shots, sot, corners, xg, fouls, yellow, red. The default keeps the v1 feature set, so
+older configs build the same columns.
+"""
 
 from orion.features.base import FEATURES, Context, Feature, TeamSeries, team_long
 
@@ -7,13 +11,15 @@ from orion.features.base import FEATURES, Context, Feature, TeamSeries, team_lon
 class Form(Feature):
     name = "form"
 
-    def __init__(self, windows: list[int] = (5,), min_periods: int = 3):
+    def __init__(self, windows: list[int] = (5,), min_periods: int = 3,
+                 stats: list[str] = ("goals", "shots", "sot", "corners", "xg")):
         self.windows = list(windows)
         self.min_periods = min_periods
+        self.stats = list(stats)
 
     def compute(self, ctx: Context) -> TeamSeries:
         long = team_long(ctx.played)
-        stats = [c for c in long.columns if c.endswith(("_for", "_against"))] + ["points"]
+        stats = [f"{s}_{side}" for s in self.stats for side in ("for", "against")] + ["points"]
         out = long[["team", "date"]].rename(columns={"date": "available_at"})
         grouped = long.groupby("team", sort=False)[stats]
         for w in self.windows:

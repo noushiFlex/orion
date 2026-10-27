@@ -13,8 +13,8 @@ import logging
 import numpy as np
 import pandas as pd
 
-from orion import leagues, mapping
 from orion.features.base import FEATURES, Context, Feature, MatchLevel
+from orion.features.tm import linked_games, per_side
 from orion.sources.transfermarkt import Transfermarkt
 
 log = logging.getLogger(__name__)
@@ -28,38 +28,22 @@ class Lineup(Feature):
         self.window, self.min_valued = window, min_valued
 
     def compute(self, ctx: Context) -> MatchLevel:
-        tm = Transfermarkt().load(ctx.cfg)
-        names = mapping.load_or_build("transfermarkt", tm.dropna(subset=["home_goals", "away_goals"]), ctx.played)
-        tm = mapping.apply(tm, names, "transfermarkt")
-        for side in ("home", "away"):  # too few valued starters: the XI value is not comparable
-            thin = tm[f"{side}_n_valued"].fillna(0) < self.min_valued
-            tm.loc[thin, [f"{side}_value_m", f"{side}_log_value"]] = np.nan
-        tm = tm.assign(**{f"{s}_id": tm["div"].map(lambda d: leagues.get(d).country) + "/" + tm[s] for s in ("home", "away")})
-        tm = self._with_usual(tm)
-
-        pairs = ctx.matches[["match_id", "div", "date", "home", "away"]].merge(
-            tm.rename(columns={"date": "tm_date"}), on=["div", "home", "away"])
-        pairs["gap"] = (pairs["date"] - pairs["tm_date"]).abs()
-        pairs = pairs[pairs["gap"] <= pd.Timedelta(days=1)].sort_values("gap").drop_duplicates("match_id")
-        log.info("lineup: XI values for %d matches", int(pairs["home_log_value"].notna().sum()))
-
-        frame = pairs[["match_id"]].copy()
+        xi = Transfermarkt().xi_values(ctx.cfg)
+        xi.loc[xi["n_valued"] < self.min_valued, ["value_m", "log_value"]] = np.nan  # too few valued starters
+        pairs = linked_games(ctx)
+        frame = per_side(pairs, xi, ["log_value", "value_m"])
+        usual = self._usual(pairs, frame)
         for side in ("home", "away"):
-            frame[f"{side}_log_value"] = pairs[f"{side}_log_value"].to_numpy()
-            frame[f"{side}_vs_usual"] = (pairs[f"{side}_log_value"] - pairs[f"{side}_usual"]).to_numpy()
-            frame[f"{side}_value_m"] = pairs[f"{side}_value_m"].to_numpy()
+            frame[f"{side}_vs_usual"] = frame[f"{side}_log_value"] - usual[side]
         frame["log_diff"] = frame["home_log_value"] - frame["away_log_value"]
+        log.info("lineup: XI values for %d matches", int(frame["home_log_value"].notna().sum()))
         return MatchLevel(frame)
 
-    def _with_usual(self, tm: pd.DataFrame) -> pd.DataFrame:
+    def _usual(self, pairs: pd.DataFrame, frame: pd.DataFrame) -> dict[str, pd.Series]:
         """Each side's usual XI value: mean over the team's previous `window` games (shift(1): never this game)."""
-        long = pd.concat([
-            pd.DataFrame({"row": tm.index, "side": side, "team": tm[f"{side}_id"], "date": tm["date"],
-                          "log_value": tm[f"{side}_log_value"]}) for side in ("home", "away")
-        ]).sort_values(["team", "date"], kind="stable")
-        long["usual"] = long.groupby("team")["log_value"].transform(
-            lambda s: s.shift(1).rolling(self.window, min_periods=3).mean())
-        out = tm.copy()
-        for side in ("home", "away"):
-            out[f"{side}_usual"] = long[long["side"] == side].set_index("row")["usual"]
-        return out
+        long = pd.concat([pd.DataFrame({"row": pairs.index, "side": side, "team": pairs[f"{side}_id"],
+                                        "date": pairs["tm_date"], "v": frame[f"{side}_log_value"]})
+                          for side in ("home", "away")]).sort_values(["team", "date"], kind="stable")
+        long = long.reset_index(drop=True)
+        long["usual"] = long.groupby("team")["v"].transform(lambda s: s.shift(1).rolling(self.window, min_periods=3).mean())
+        return {side: long[long["side"] == side].set_index("row")["usual"].reindex(pairs.index) for side in ("home", "away")}

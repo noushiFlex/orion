@@ -11,7 +11,10 @@ FEATURE_SETS = [
     {"elo": {}},
     {"rest": {}},
     {"goalrate": {}},
+    {"referee": {}},
+    {"form_discipline": None},
 ]
+FEATURE_SETS[-1] = {"form": {"windows": [3], "min_periods": 1, "stats": ["fouls", "yellow", "red"]}}
 
 
 @pytest.mark.parametrize("features", FEATURE_SETS, ids=lambda f: next(iter(f)))

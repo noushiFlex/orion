@@ -60,7 +60,7 @@ def team_long(played: pd.DataFrame) -> pd.DataFrame:
     for side, other in (("home", "away"), ("away", "home")):
         d = pd.DataFrame({"team": played[f"{side}_id"].values, "date": played["date"].values,
                           "match_id": played["match_id"].values})
-        for stat in ("goals", "shots", "sot", "corners", "xg"):
+        for stat in ("goals", "shots", "sot", "corners", "xg", "fouls", "yellow", "red"):
             d[f"{stat}_for"] = played[f"{side}_{stat}"].values
             d[f"{stat}_against"] = played[f"{other}_{stat}"].values
         diff = d["goals_for"] - d["goals_against"]
