@@ -37,10 +37,13 @@ class FootballData(Source):
     SEASON_URL = "https://football-data.co.uk/mmz4281/{season}/{div}.csv"
     FIXTURES_URL = "https://football-data.co.uk/fixtures.csv"
 
+    def _codes(self, cfg: Config) -> list[str]:
+        return [c for c in cfg.leagues if leagues.get(c).source == self.name]
+
     def fetch(self, cfg: Config, refresh: bool = False) -> list[Path]:
         check = require_csv_header(b"Div")
         todo = [(self.SEASON_URL.format(season=season, div=div), self.raw_dir / f"{div}_{season}.csv")
-                for div in cfg.leagues for season in cfg.seasons
+                for div in self._codes(cfg) for season in cfg.seasons
                 if refresh or season == cfg.current_season or not (self.raw_dir / f"{div}_{season}.csv").exists()]
         todo.append((self.FIXTURES_URL, self.raw_dir / "fixtures.csv"))
         paths = []
@@ -54,7 +57,7 @@ class FootballData(Source):
 
     def load(self, cfg: Config) -> pd.DataFrame:
         frames = []
-        for div in cfg.leagues:
+        for div in self._codes(cfg):
             for season in cfg.seasons:
                 path = self.raw_dir / f"{div}_{season}.csv"
                 if not path.exists():

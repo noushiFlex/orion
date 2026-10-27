@@ -11,6 +11,7 @@ class League:
     name: str
     understat: str | None = None  # Understat league key, when Understat covers it
     transfermarkt: str | None = None  # Transfermarkt competition id, when the Transfermarkt dataset covers it
+    source: str = "football_data"  # registered source that provides its matches
 
 
 _TM = {"E0": "GB1", "SC0": "SC1", "D1": "L1", "I1": "IT1", "SP1": "ES1", "F1": "FR1", "N1": "NL1", "B1": "BE1",
@@ -39,6 +40,23 @@ _ALL = [
     League("P1", "POR", 1, "Primeira Liga"),
     League("T1", "TUR", 1, "Super Lig"),
     League("G1", "GRE", 1, "Super League"),
+    # football-data "new" leagues: one multi-season file each, results and closing odds only.
+    League("ARG", "ARG", 1, "Liga Profesional", source="football_data_extra"),
+    League("AUT", "AUT", 1, "Bundesliga (AT)", source="football_data_extra"),
+    League("BRA", "BRA", 1, "Serie A (BR)", source="football_data_extra"),
+    League("CHN", "CHN", 1, "Super League (CN)", source="football_data_extra"),
+    League("DNK", "DNK", 1, "Superliga", source="football_data_extra"),
+    League("FIN", "FIN", 1, "Veikkausliiga", source="football_data_extra"),
+    League("IRL", "IRL", 1, "Premier Division (IE)", source="football_data_extra"),
+    League("JPN", "JPN", 1, "J1 League", source="football_data_extra"),
+    League("MEX", "MEX", 1, "Liga MX", source="football_data_extra"),
+    League("NOR", "NOR", 1, "Eliteserien", source="football_data_extra"),
+    League("POL", "POL", 1, "Ekstraklasa", source="football_data_extra"),
+    League("ROU", "ROU", 1, "Liga I", source="football_data_extra"),
+    League("RUS", "RUS", 1, "Premier League (RU)", source="football_data_extra"),
+    League("SWE", "SWE", 1, "Allsvenskan", source="football_data_extra"),
+    League("SWZ", "SWZ", 1, "Super League (CH)", source="football_data_extra"),
+    League("USA", "USA", 1, "MLS", source="football_data_extra"),
 ]
 LEAGUES = {league.code: replace(league, transfermarkt=_TM.get(league.code)) for league in _ALL}
 

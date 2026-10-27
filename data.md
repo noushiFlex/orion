@@ -36,11 +36,13 @@ manifest). Personal use only: football-data.co.uk and Footiqo restrict use to pr
 
 ## Downloaded, not used yet
 
-- `data/raw/football-data-co-uk-extra/`: 16 extra leagues (ARG AUT BRA CHN DNK FIN IRL JPN MEX NOR POL ROU RUS SWE
+- `data/raw/football-data-co-uk-extra/` (source `football_data_extra`, used only by orion-v2.5, which it made
+  worse): 16 extra leagues (ARG AUT BRA CHN DNK FIN IRL JPN MEX NOR POL ROU RUS SWE
   SWZ USA), one multi-season file each, about 63,800 matches. Different column layout (`Home, Away, HG, AG`).
 - `data/raw/statsbomb/`: all 18 Champions League matches in StatsBomb Open Data (events with shot xG, lineups).
   Credit StatsBomb if anything is published.
-- `data/raw/salimt-football-datasets/repo/`: 143k player injuries with dates (per player, not per match).
+- `data/raw/salimt-football-datasets/repo/`: injuries file `player_injuries_updated_20260929.csv` (168k rows) is
+  used by the `injuries` feature (v2.1+), joined to Transfermarkt players by id.
 - `data/raw/football-injuries/repo/`: scraper code only; `mappings/team_map.csv` may help later.
 
 ## Tested, not available

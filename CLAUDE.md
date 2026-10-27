@@ -93,6 +93,16 @@ Versions (each one a config in `configs/`, same test seasons and `with_odds` sub
 | v1.5 | + odds_shape (bookmaker disagreement), market_residual (market + correction, C chosen in-sample) | 0.9647 | +0.0017 |
 | v1.6 | trained on all 22 leagues, scored on the Big Five (`eval_leagues`) | 0.9644 | +0.0014 |
 | v2 | + lineup (starting-XI Transfermarkt value vs usual XI); predicts at line-up time | 0.9639 | +0.0009 |
+| **v2.1** | **+ injuries (injured regulars on match day, salimt history to 2026-09-29)** | **0.9635** | **+0.0004** |
+| v2.2 | + suspensions (bans after the previous league game) | 0.9636 | +0.0006 |
+| v2.3 | + manager tenure | 0.9638 | +0.0008 |
+| v2.4 | + discipline form (fouls, cards) and referee tendencies | 0.9636 | +0.0005 |
+| v2.5 | v2.4 + 16 football-data "new" leagues as training rows | 0.9664 | +0.0034 |
+
+Best version: v2.1 (99.7% of the closing market's skill). Paired tests vs pre-closing odds: v2.1 -0.0020 ±
+0.0016 (significant); vs closing +0.0004 ± 0.0021 and vs v2 -0.0004 ± 0.0008 (not significant). v2.2-v2.4 add
+nothing measurable. v2.5 is worse: stacking weights are learned on a holdout season that mixes in leagues without
+pre-closing odds, and logit/gbm learn from leagues unlike the Big Five. Keep extra leagues out of Big-Five configs.
 
 v2 paired tests (95%): vs pre-closing market -0.0016 ± 0.0015 (significant, first one), vs closing +0.0009 ±
 0.0020 and vs v1.6 -0.0005 ± 0.0006 (not significant). v2 is backtest-only: Transfermarkt stops at 2026-07-06, so

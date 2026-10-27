@@ -16,7 +16,7 @@ from orion import leagues, manifest, mapping, pit, progress
 from orion.config import Config
 from orion.features import FEATURES, Context
 from orion.paths import PROCESSED
-from orion.sources.football_data import FootballData
+from orion.sources import SOURCES
 from orion.sources.understat import Understat
 
 log = logging.getLogger(__name__)
@@ -40,11 +40,17 @@ class Dataset:
 def build(cfg: Config) -> Dataset:
     with progress.task("Load matches", total=2) as bar:
         bar.advance(0, label="football-data")
-        matches = FootballData().load(cfg)
+        matches = load_matches(cfg)
         bar.advance(label="understat xG")
         matches = attach_xg(cfg, matches)
         bar.advance()
     return build_features(Context(cfg, matches), cfg.features)
+
+
+def load_matches(cfg: Config) -> pd.DataFrame:
+    """Matches from every source that provides one of cfg's leagues (see League.source)."""
+    frames = [SOURCES.get(name)().load(cfg) for name in sorted({leagues.get(c).source for c in cfg.leagues})]
+    return pd.concat(frames, ignore_index=True).sort_values(["date", "match_id"]).reset_index(drop=True)
 
 
 def build_features(ctx: Context, features: dict[str, dict]) -> Dataset:
