@@ -90,10 +90,17 @@ Versions (each one a config in `configs/`, same test seasons and `with_odds` sub
 | v1.2 | + logit, regularised gbm, ensemble poisson/logit/gbm | 0.9769 | +0.0138 |
 | v1.3 | + pre-closing market-average odds as a feature | 0.9687 | +0.0057 |
 | v1.4 | stacking with `market_pre` as a member, learned weights | 0.9653 | +0.0023 |
+| v1.5 | + odds_shape (bookmaker disagreement), market_residual (market + correction, C chosen in-sample) | 0.9647 | +0.0017 |
+| v1.6 | trained on all 22 leagues, scored on the Big Five (`eval_leagues`) | 0.9644 | +0.0014 |
 
-Reference points: pre-closing market average alone 0.9655, Pinnacle closing 0.9630. v1.4 only matches the
-pre-closing market (stacking gives it 60-80% of the weight): no real edge yet. A real gain needs information the
-market prices late or poorly (lineups, absences). Pinnacle columns are absent from 2026/27 files, so the closing
+Reference points: pre-closing market average alone 0.9655, Pinnacle closing 0.9630. Paired tests (95%) on v1.6:
+ensemble vs pre-closing market -0.0011 ± 0.0013, vs closing +0.0014 ± 0.0020, both not significant. Orion is at
+market level, with no proven edge. A real gain needs information the market prices late or poorly (lineups,
+absences). Never tune hyperparameters on test seasons: choose them inside the training window (see
+`market_residual`, C="auto").
+
+Data quirk: football-data writes 0 for a missing price; `FootballData.load` turns exact zeros into nulls (7 rows
+in lower divisions), any other odds below 1 still fail schema validation. Pinnacle columns are absent from 2026/27 files, so the closing
 baseline only exists for past seasons; `AvgH/BbAvH` (pre-closing average) exists everywhere, fixtures included.
 
 ## Rules

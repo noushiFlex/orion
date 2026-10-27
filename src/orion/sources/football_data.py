@@ -68,6 +68,11 @@ class FootballData(Source):
             frames.append(fx.assign(season=cfg.current_season))
         df = pd.concat(frames, ignore_index=True)
 
+        odds = [c for c in df.columns if c.startswith("odds_")]
+        zeros = df[odds].apply(pd.to_numeric, errors="coerce").eq(0)
+        if zeros.any().any():  # football-data writes 0 for a missing price; anything else below 1 still fails
+            log.info("football-data: %d odds of 0 treated as missing", int(zeros.sum().sum()))
+            df[odds] = df[odds].mask(zeros)
         df["date"] = pd.to_datetime(df["date"], dayfirst=True, format="mixed", errors="coerce")
         df = df.dropna(subset=["date", "home", "away"])
         for side in ("home", "away"):
