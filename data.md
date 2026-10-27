@@ -22,14 +22,24 @@ manifest). Personal use only: football-data.co.uk and Footiqo restrict use to pr
   provisional continuation, not ClubElo's. `Matches.csv` is used only to learn team-name mappings.
 - Names mapped automatically (166 accepted, aliases such as "MGladbach"/"M'gladbach" kept).
 
+### transfermarkt -> data/raw/transfermarkt/transfermarkt-datasets.duckdb
+- https://github.com/dcaribou/transfermarkt-datasets. Used for the `lineup` feature (v2): starting XIs and player
+  valuations, top divisions E0 SC0 D1 I1 SP1 F1 N1 B1 P1 T1 G1. Names mapped automatically (330/331).
+- Frozen upstream: games stop 2026-07-06, valuations 2026-06-12. Also holds 1,871 Champions League games.
+
+## Benchmarks (not model inputs)
+
+- `data/raw/theopenmodel/`: https://theopenmodel.com/data/, CC BY 4.0 (credit "The Open Model",
+  theopenmodel.com). `predictions.csv`: their probabilities locked before kickoff, 2026/27 Big Five, results
+  filled after full time. `fixtures-2026-27.csv`: probabilities for all 1,752 matches of the season. Built on
+  ClubElo, so no new information as a feature; used to compare Orion out of sample.
+
 ## Downloaded, not used yet
 
 - `data/raw/football-data-co-uk-extra/`: 16 extra leagues (ARG AUT BRA CHN DNK FIN IRL JPN MEX NOR POL ROU RUS SWE
   SWZ USA), one multi-season file each, about 63,800 matches. Different column layout (`Home, Away, HG, AG`).
 - `data/raw/statsbomb/`: all 18 Champions League matches in StatsBomb Open Data (events with shot xG, lineups).
   Credit StatsBomb if anything is published.
-- `data/raw/transfermarkt/transfermarkt-datasets.duckdb`: 88,958 games (incl. 1,871 Champions League), 3.17M lineup
-  rows, valuations, transfers. Frozen at 2026-07-06.
 - `data/raw/salimt-football-datasets/repo/`: 143k player injuries with dates (per player, not per match).
 - `data/raw/football-injuries/repo/`: scraper code only; `mappings/team_map.csv` may help later.
 

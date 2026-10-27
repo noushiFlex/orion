@@ -1,6 +1,6 @@
 """League metadata. Supporting a new league = one line here, then its code in a config."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 
 @dataclass(frozen=True)
@@ -10,7 +10,11 @@ class League:
     tier: int
     name: str
     understat: str | None = None  # Understat league key, when Understat covers it
+    transfermarkt: str | None = None  # Transfermarkt competition id, when the Transfermarkt dataset covers it
 
+
+_TM = {"E0": "GB1", "SC0": "SC1", "D1": "L1", "I1": "IT1", "SP1": "ES1", "F1": "FR1", "N1": "NL1", "B1": "BE1",
+       "P1": "PO1", "T1": "TR1", "G1": "GR1"}
 
 _ALL = [
     League("E0", "ENG", 1, "Premier League", "EPL"),
@@ -36,7 +40,7 @@ _ALL = [
     League("T1", "TUR", 1, "Super Lig"),
     League("G1", "GRE", 1, "Super League"),
 ]
-LEAGUES = {league.code: league for league in _ALL}
+LEAGUES = {league.code: replace(league, transfermarkt=_TM.get(league.code)) for league in _ALL}
 
 
 def get(code: str) -> League:

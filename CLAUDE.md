@@ -92,6 +92,14 @@ Versions (each one a config in `configs/`, same test seasons and `with_odds` sub
 | v1.4 | stacking with `market_pre` as a member, learned weights | 0.9653 | +0.0023 |
 | v1.5 | + odds_shape (bookmaker disagreement), market_residual (market + correction, C chosen in-sample) | 0.9647 | +0.0017 |
 | v1.6 | trained on all 22 leagues, scored on the Big Five (`eval_leagues`) | 0.9644 | +0.0014 |
+| v2 | + lineup (starting-XI Transfermarkt value vs usual XI); predicts at line-up time | 0.9639 | +0.0009 |
+
+v2 paired tests (95%): vs pre-closing market -0.0016 ± 0.0015 (significant, first one), vs closing +0.0009 ±
+0.0020 and vs v1.6 -0.0005 ± 0.0006 (not significant). v2 is backtest-only: Transfermarkt stops at 2026-07-06, so
+for upcoming matches the lineup columns are empty and v2 behaves like v1.6. Live use needs a current line-up source.
+
+Out-of-sample check on 2026/27 (124 matches, after all training data), against The Open Model's pre-kickoff
+ledger: pre-closing market 0.956, Orion v1.6 0.962, The Open Model 0.986 (Orion - Open Model -0.024 ± 0.028).
 
 Reference points: pre-closing market average alone 0.9655, Pinnacle closing 0.9630. Paired tests (95%) on v1.6:
 ensemble vs pre-closing market -0.0011 ± 0.0013, vs closing +0.0014 ± 0.0020, both not significant. Orion is at

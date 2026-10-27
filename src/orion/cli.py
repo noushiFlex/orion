@@ -22,6 +22,7 @@ from orion.paths import CONFIGS, MODELS as MODELS_DIR
 from orion.sources import SOURCES
 from orion.sources.clubelo import ClubElo
 from orion.sources.football_data import FootballData
+from orion.sources.transfermarkt import Transfermarkt
 from orion.sources.understat import Understat
 
 log = logging.getLogger("orion")
@@ -50,7 +51,8 @@ def cmd_manifest(cfg, args):
 
 def cmd_map(cfg, args):
     played = FootballData().load(cfg).dropna(subset=["home_goals"])
-    for name, src in (("understat", Understat().load(cfg)), ("clubelo", ClubElo().load_results(cfg))):
+    for name, src in (("understat", Understat().load(cfg)), ("clubelo", ClubElo().load_results(cfg)),
+                      ("transfermarkt", Transfermarkt().load_results(cfg))):
         m = mapping.load_or_build(name, src, played, rebuild=args.rebuild)
         rejected = m[~m["accepted"]]
         log.info("%s: %d names accepted, %d rejected%s", name, int(m["accepted"].sum()), len(rejected),
