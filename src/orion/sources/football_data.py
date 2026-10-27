@@ -22,9 +22,12 @@ RENAME = {
     "HR": "home_red", "AR": "away_red",
     "PSCH": "odds_close_home", "PSCD": "odds_close_draw", "PSCA": "odds_close_away",  # Pinnacle closing
     "AvgH": "odds_pre_home", "AvgD": "odds_pre_draw", "AvgA": "odds_pre_away",  # market average, pre-closing
+    "MaxH": "odds_max_home", "MaxD": "odds_max_draw", "MaxA": "odds_max_away",  # best price, pre-closing
+    "B365H": "odds_b365_home", "B365D": "odds_b365_draw", "B365A": "odds_b365_away",  # Bet365, pre-closing
 }
-# Before 2019/20 the pre-closing market average was published as BbAv*; used when Avg* is absent.
-LEGACY = {"BbAvH": "odds_pre_home", "BbAvD": "odds_pre_draw", "BbAvA": "odds_pre_away"}
+# Before 2019/20 the pre-closing average and best price were published as BbAv* / BbMx*; used when absent.
+LEGACY = {"BbAvH": "odds_pre_home", "BbAvD": "odds_pre_draw", "BbAvA": "odds_pre_away",
+          "BbMxH": "odds_max_home", "BbMxD": "odds_max_draw", "BbMxA": "odds_max_away"}
 
 
 @SOURCES.register

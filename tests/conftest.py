@@ -17,6 +17,9 @@ def make_matches(rounds: int = 30, teams=("A", "B", "C", "D", "E", "F"), seed: i
             for stat, lam in (("shots", 12), ("sot", 4), ("corners", 5)):
                 row[f"home_{stat}"], row[f"away_{stat}"] = rng.poisson(lam), rng.poisson(lam)
             row["home_xg"], row["away_xg"] = rng.gamma(2, 0.7), rng.gamma(2, 0.6)
+            for o, base in (("home", 2.2), ("draw", 3.4), ("away", 3.3)):
+                avg = base * rng.uniform(0.7, 1.3)
+                row[f"odds_pre_{o}"], row[f"odds_max_{o}"], row[f"odds_b365_{o}"] = avg, avg * 1.05, avg * 0.98
             rows.append(row)
         day += pd.Timedelta(days=7)
     df = pd.DataFrame(rows)

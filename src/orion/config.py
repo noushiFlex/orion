@@ -20,6 +20,7 @@ class Config:
     ensemble: dict[str, float]  # fixed weights, model name -> weight
     stack: tuple[str, ...]  # or: members whose weights are learned (see orion.training)
     test_seasons: tuple[str, ...]
+    eval_leagues: tuple[str, ...] = ()  # leagues scored in the backtest (default: all); training uses every league
     path: Path | None = None
 
     @property
@@ -48,6 +49,7 @@ def load(path: str | Path) -> Config:
         ensemble={k: float(v) for k, v in ensemble.items()},
         stack=stack,
         test_seasons=tuple(str(s) for s in raw["backtest"]["test_seasons"]),
+        eval_leagues=tuple(raw["backtest"].get("eval_leagues") or data["leagues"]),
         path=path,
     )
     _validate(cfg)
@@ -57,6 +59,8 @@ def load(path: str | Path) -> Config:
 def _validate(cfg: Config) -> None:
     for code in cfg.leagues:
         leagues.get(code)
+    if not set(cfg.eval_leagues) <= set(cfg.leagues):
+        raise ValueError(f"eval_leagues not in data.leagues: {sorted(set(cfg.eval_leagues) - set(cfg.leagues))}")
     if cfg.warmup_seasons >= len(cfg.seasons):
         raise ValueError("warmup_seasons leaves no season to train on")
     unknown = set(cfg.test_seasons) - set(cfg.seasons)

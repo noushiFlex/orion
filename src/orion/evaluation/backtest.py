@@ -27,7 +27,8 @@ def run(cfg: Config, ds: Dataset) -> tuple[pd.DataFrame, pd.DataFrame, dict[str,
     with progress.task("Backtest", total=len(cfg.test_seasons) * training.steps(cfg)) as bar:
         for season in cfg.test_seasons:
             test_year = seasons.start_year(season)
-            train, test = df[(year >= first) & (year < test_year)], df[year == test_year]
+            train = df[(year >= first) & (year < test_year)]
+            test = df[(year == test_year) & df["div"].isin(cfg.eval_leagues)]
             models, weights = training.fit(cfg, ds.feature_cols, train, bar, label=f"{season} · ")
             weights_by_season[season] = weights
             preds += [_frame(season, test, name, p) for name, p in training.predict(models, weights, test).items()]

@@ -77,6 +77,12 @@ MATCHES = Schema("matches", (
     Col("odds_pre_home", "float", required=False, min=1),
     Col("odds_pre_draw", "float", required=False, min=1),
     Col("odds_pre_away", "float", required=False, min=1),
+    Col("odds_max_home", "float", required=False, min=1),
+    Col("odds_max_draw", "float", required=False, min=1),
+    Col("odds_max_away", "float", required=False, min=1),
+    Col("odds_b365_home", "float", required=False, min=1),
+    Col("odds_b365_draw", "float", required=False, min=1),
+    Col("odds_b365_away", "float", required=False, min=1),
 ))
 
 # Per-match xG from a secondary source, in that source's team names.
