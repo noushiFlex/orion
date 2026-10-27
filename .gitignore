@@ -6,5 +6,5 @@ __pycache__/
 # data: raw files are large and licence-restricted; everything else is rebuilt by `orion`
 data/*
 !data/manifest.jsonl
-runs/
-models/
+/runs/
+/models/
