@@ -1,0 +1,31 @@
+# Orion v1.6-minor: same model as v1.6, scored on the 17 non-Big-Five leagues (less efficient markets?).
+name: orion-v1.6-minor
+seed: 42
+
+data:
+  leagues: [E0, E1, E2, E3, EC, SC0, SC1, SC2, SC3, D1, D2, I1, I2, SP1, SP2, F1, F2, N1, B1, P1, T1, G1]
+  seasons: {first: "1516", last: "2627"}
+  warmup_seasons: 1  # 2015/16 only warms up rolling features and Elo; it never provides training rows
+
+features:
+  form: {windows: [5, 10], min_periods: 3}
+  elo: {k: 20, home_advantage: 65, start: 1500, promoted_start: 1400}
+  clubelo: {max_age_days: 45}
+  rest: {cap_days: 30}
+  goalrate: {targets: [goals, xg], lr: 0.04, season_shrink: 0.75}
+  market: {kind: pre}
+  odds_shape: {}
+
+models:
+  market: {}  # Pinnacle closing odds, margin removed: the bar to beat
+  market_pre: {model: market, kind: pre}  # pre-closing market average, as a model
+  poisson: {alpha: 1.0, max_goals: 10}
+  logit: {C: 0.05}
+  market_residual: {C: auto, market_scale: 10}  # C picked on the last 20% of each training window
+  gbm: {learning_rate: 0.02, max_iter: 400, max_leaf_nodes: 7, min_samples_leaf: 200, l2_regularization: 5.0}
+
+ensemble: {stack: [market_pre, market_residual, poisson, logit, gbm]}
+
+backtest:
+  test_seasons: ["2223", "2324", "2425", "2526"]
+  eval_leagues: [E1, E2, E3, EC, SC0, SC1, SC2, SC3, D2, I2, SP2, F2, N1, B1, P1, T1, G1]
