@@ -107,6 +107,22 @@ market level, with no proven edge. A real gain needs information the market pric
 absences). Never tune hyperparameters on test seasons: choose them inside the training window (see
 `market_residual`, C="auto").
 
+Comparison with The Open Model's public record (https://theopenmodel.com/record/, Big Five backtest 2023-2025,
+3,362 matches): accuracy 51.0% vs their market 54.0%, calibration gap 0.68%. Orion v2 on 6,228 matches: accuracy
+54.3% vs market 54.5%, calibration gap 0.57% (market 1.01%), Brier 0.573. Overall rating: v2 15/20 (market level,
+beats pre-closing odds, no proven edge on closing); live-usable v1.6 14/20.
+
+## Known limitations
+
+- Odds for a match appear in `fixtures.csv` only a few days before kickoff (usually Tuesday/Friday). Before
+  that, configs with odds features (v1.3+) have nothing to work with: use `configs/orion-v1.2.yaml` (no odds).
+  The `market` model then returns base rates, not market prices; ignore it.
+- A match missing from `fixtures.csv` cannot go through `orion predict` yet. Workaround: append a MATCHES row
+  (no goals) to the loaded matches, then `dataset.build_features` + `training.fit` / `training.predict`.
+- ClubElo mirror snapshots stop at 2026-09-01; with `max_age_days: 45` the feature is empty for later matches.
+- Transfermarkt stops at 2026-07-06: v2 line-up features are empty for current matches (v2 behaves like v1.6).
+- Pinnacle columns are absent from 2026/27 files: the closing-odds baseline exists only for past seasons.
+
 Data quirk: football-data writes 0 for a missing price; `FootballData.load` turns exact zeros into nulls (7 rows
 in lower divisions), any other odds below 1 still fail schema validation. Pinnacle columns are absent from 2026/27 files, so the closing
 baseline only exists for past seasons; `AvgH/BbAvH` (pre-closing average) exists everywhere, fixtures included.
