@@ -1,0 +1,96 @@
+# foot-predict / Orion
+
+Personal football prediction project (private use only). Orion outputs 1/X/2 probabilities and score distributions.
+Goal: well-calibrated probabilities, measured against the Pinnacle closing line. Not guaranteed wins.
+
+## Layout
+
+```
+configs/<name>.yaml     one file per model version (leagues, seasons, features, models, backtest)
+src/orion/
+  sources/              one module per data source: fetch() raw files, load() validated frame
+  features/             one module per feature, returns TeamSeries or MatchLevel
+  models/               one module per model, fit(df) / predict_proba(df) -> (n, 3) home/draw/away
+  evaluation/           metrics (log-loss, Brier, RPS) and walk-forward backtest
+  pit.py                the only place features meet matches (point-in-time join)
+  mapping.py            learned team-name maps between sources (vote on date + score)
+  schema.py             column contracts, sources validate on load
+  manifest.py, http.py  provenance (data/manifest.jsonl) and verified downloads
+  dataset.py, artifact.py, tracking.py, cli.py
+data/raw/<source>/      downloads, never modified by code
+data/interim/mappings/  learned team-name maps
+data/processed/<cfg>/   dataset.parquet + meta.json
+models/<cfg>/           trained artifact + config copy + meta
+runs/<time>-<cfg>-<kind>/  every backtest / predict run: config, environment, fingerprint, outputs
+tests/                  leakage, point-in-time, mapping, schema, metrics, models
+```
+
+## Commands
+
+Run from the project root with the venv: `./.venv/bin/orion <cmd>`. Default config is `configs/orion-v1.yaml`;
+pass `-c configs/<name>.yaml` (before the command) for another version.
+
+| Command | What it does |
+|---|---|
+| `fetch [source...] [--refresh]` | Download raw data (all sources by default). Past seasons are skipped; the current season and fixtures are re-fetched. |
+| `manifest` | Record raw files that are not yet in `data/manifest.jsonl`. |
+| `map [--rebuild]` | Learn team-name mappings and print accepted/rejected names. |
+| `build` | Build `data/processed/<cfg>/dataset.parquet`. |
+| `backtest [--rebuild]` | Walk-forward backtest, scores printed and saved in `runs/`. `--rebuild` rebuilds the dataset first. |
+| `train [--rebuild]` | Fit all models on every post-warm-up season, save to `models/<cfg>/`. |
+| `predict [--days N]` | Probabilities for scheduled matches in the next N days (default 7). Always rebuilds the dataset. |
+
+Full refresh, in this order:
+
+```bash
+./.venv/bin/orion fetch
+./.venv/bin/orion backtest --rebuild
+./.venv/bin/orion train
+./.venv/bin/orion predict --days 7
+```
+
+Every command shows live progress bars with elapsed time and ETA, then a dashboard (`src/orion/ui.py`, rich +
+plotext): backtest prints scores vs market, a log-loss curve per season, a per-league table and a verdict; train
+and predict print summary panels. Core modules report progress through `orion.progress` and never import the UI.
+plotext is pinned below 6 (6.x rewrote its API).
+
+Tests: `./.venv/bin/pytest -q` (20 tests: leakage, point-in-time, mapping, schema, metrics, models).
+Dependencies: `pyproject.toml`, exact versions in `requirements.lock`. Install: `./.venv/bin/pip install -e ".[dev]"`.
+
+## Metrics
+
+- Log-loss: main metric. Punishes confident wrong predictions. Lower is better; always guessing 1/3 gives about 1.10.
+- RPS (ranked probability score): like log-loss but respects the order home < draw < away. Lower is better.
+- Accuracy: share of matches where the most likely outcome happened. Ignores confidence, so secondary only.
+- Compare models on the `with_odds` subset, where every model and `market` are scored on the same matches.
+
+## Status (2026-10-27)
+
+Orion v1 (`configs/orion-v1.yaml`): Big Five, 2015/16 to 2026/27, features form (5 and 10 matches), own Elo,
+ClubElo, rest days; xG enters through form. Models: market baseline, Poisson (Dixon-Coles), GBM, ensemble
+Poisson+GBM 50/50. Final model trained on 18,331 matches, 2016/17 to 2026-10-26 (2015/16 is warm-up only).
+
+Backtest, test seasons 2022/23 to 2025/26, `with_odds` subset:
+
+| Model | Log-loss | RPS | Accuracy |
+|---|---|---|---|
+| market (bar to beat) | 0.963 | 0.193 | 54.5% |
+| poisson | 0.980 | 0.198 | 53.5% |
+| ensemble | 0.982 | 0.199 | 53.5% |
+| gbm | 0.995 | 0.201 | 52.6% |
+
+v1 does not beat the market. Do not use it for betting.
+
+Ideas for v2 (new config file, keep v1 unchanged): opening odds as a feature, probability calibration, per-match
+absences (injuries, suspensions), shot-level xG, Champions League data.
+
+## Rules
+
+- No leakage. Features only reach matches through `pit.join`, which uses values dated strictly before the match day.
+  Never feed a match's own columns (goals, shots, xG, odds) to a model; only `Dataset.feature_cols`.
+- New source / feature / model = new module + `@REGISTRY.register`, then list it in a config. No edits elsewhere.
+- New model version = new config file (`configs/orion-v2.yaml`). Never change a config that already has results in `runs/`.
+- Betting odds are not model inputs in v1. The `market` feature exists for later versions; the `market` model is the baseline.
+- Judge models by log-loss / RPS on the `with_odds` subset against `market`, not by accuracy.
+- Raw files are recorded in `data/manifest.jsonl`. Do not edit raw files by hand.
+- Data sources and their limits are described in `data.md`.
